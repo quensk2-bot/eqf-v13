@@ -94,6 +94,17 @@ const shellStyles: Record<string, React.CSSProperties> = {
   },
 };
 
+// painel flutuante para execução N2 (sempre montado)
+const floatingExec: Record<string, React.CSSProperties> = {
+  container: {
+    position: "fixed",
+    bottom: 16,
+    right: 16,
+    maxWidth: 420,
+    zIndex: 50,
+  },
+};
+
 // ============================================================================
 // MAIN
 // ============================================================================
@@ -178,9 +189,9 @@ export function MainShell({ perfil, onLogout }: Props) {
 
           <div style={{ height: 16 }} />
 
-          <div style={shellStyles.card}>
-            <N2ExecutarRotina perfil={perfil} />
-          </div>
+          {/* Observação: a execução da rotina N2 fica sempre disponível
+              no painel flutuante no canto da tela, para não reiniciar
+              quando trocar de página. */}
         </>
       )}
 
@@ -410,6 +421,13 @@ export function MainShell({ perfil, onLogout }: Props) {
         </header>
 
         <div style={shellStyles.content}>{renderContent()}</div>
+
+        {/* EXECUÇÃO N2 SEMPRE MONTADA (PAINEL FLUTUANTE) */}
+        {perfil.nivel === "N2" && (
+          <div style={floatingExec.container}>
+            <N2ExecutarRotina perfil={perfil} />
+          </div>
+        )}
       </main>
     </div>
   );
@@ -432,4 +450,3 @@ function menuButton(active: boolean): React.CSSProperties {
 }
 
 export default MainShell;
-
