@@ -1,0 +1,7 @@
+id,nome,email,nivel,departamento_id,setor_id,regional_id,ativo,created_at,updated_at
+22e20f3e-4887-4a56-beff-841867f8a20b,Usuário ADM Teste,teste.eqf+adm@exemplo.com,ADM,,,,true,2025-11-15 00:30:19.915171+00,2025-11-15 00:30:19.915171+00
+33196394-6ded-4d5d-a406-154b1fa111bd,nivel 3 mt,nivel3@teste.com,N3,1,3,4,true,2025-11-22 12:05:32.421819+00,2025-11-22 12:05:32.421819+00
+5df5500e-81e5-4a78-bb65-0839dcd85bf4,adm@teste.com,adm@teste.com,ADM,,,,true,2025-11-15 21:29:26.50608+00,2025-11-15 21:29:26.50608+00
+9edec64b-f84a-463d-99ea-ce7abf28c055,nivel 99 mt,nivel99@teste.com,N99,1,,,true,2025-11-22 12:06:32.172237+00,2025-11-22 12:06:32.172237+00
+e0145d7f-f92c-4d4f-8d7e-09735e1b05a6,nivel 1 mt,nivel1@teste.com,N1,1,3,4,true,2025-11-22 12:03:34.592156+00,2025-11-22 12:03:34.592156+00
+e82974d6-f3f3-40bd-b340-4cd59a29482f,nivel 2 mt,nivel2@teste.com,N2,1,3,4,true,2025-11-22 12:04:53.693269+00,2025-11-22 12:04:53.693269+00
