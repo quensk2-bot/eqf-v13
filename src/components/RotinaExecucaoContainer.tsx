@@ -323,11 +323,15 @@ export function RotinaExecucaoContainer({
   const [loadingInicial, setLoadingInicial] = useState(false);
   const [erroInicial, setErroInicial] = useState<string | null>(null);
 
-  // Carrega usuário, checklist base e (ou cria) execução
+  // ---------------------------------------------------------------------------
+  // Inicialização — carrega/ cria execução apenas UMA vez por rotina+executor
+  // ---------------------------------------------------------------------------
   useEffect(() => {
-    const init = async () => {
-      if (!open || !rotina) return;
+    // já tem execução carregada → não reinicia
+    if (!open || !rotina) return;
+    if (execucaoId !== null) return;
 
+    const init = async () => {
       setIsMinimized(false);
       setErroInicial(null);
       setLoadingInicial(true);
@@ -343,7 +347,7 @@ export function RotinaExecucaoContainer({
         const uid = userData.user.id;
         setExecutorId(uid);
 
-        // 2) Checklist base da rotina (tabela rotina_checklist)
+        // 2) Checklist base da rotina
         const { data: itensChecklist, error: checklistErr } = await supabase
           .from("rotina_checklist")
           .select("ordem, descricao")
@@ -429,7 +433,6 @@ export function RotinaExecucaoContainer({
           obs = ex.observacoes ?? "";
 
           if (ex.checklist_execucao && Array.isArray(ex.checklist_execucao)) {
-            // reaproveita os itens já preenchidos
             checklistExec = ex.checklist_execucao.map((i: any) => ({
               ordem: i.ordem,
               descricao: i.descricao ?? "",
@@ -467,23 +470,12 @@ export function RotinaExecucaoContainer({
       }
     };
 
-    if (open && rotina) {
-      init();
-    } else {
-      // reset ao fechar
-      setExecucaoId(null);
-      setExecutorId(null);
-      setChecklist([]);
-      setAnexos([]);
-      setIsFinalizada(false);
-      setIsPaused(false);
-      setElapsedSeconds(0);
-      setObservacoes("");
-      setErroInicial(null);
-    }
-  }, [open, rotina?.id]);
+    init();
+  }, [open, rotina?.id, execucaoId]);
 
-  // Cronômetro
+  // ---------------------------------------------------------------------------
+  // Cronômetro em memória
+  // ---------------------------------------------------------------------------
   useEffect(() => {
     if (!open || isPaused || isFinalizada) return;
     const id = setInterval(() => {
@@ -491,6 +483,25 @@ export function RotinaExecucaoContainer({
     }, 1000);
     return () => clearInterval(id);
   }, [open, isPaused, isFinalizada]);
+
+  // ---------------------------------------------------------------------------
+  // Salvamento contínuo do tempo no banco (a cada 5s)
+  // ---------------------------------------------------------------------------
+  useEffect(() => {
+    if (!execucaoId) return;
+
+    const id = setInterval(() => {
+      supabase
+        .from("rotina_execucoes")
+        .update({ duracao_total_segundos: elapsedSeconds })
+        .eq("id", execucaoId)
+        .catch((e) =>
+          console.error("Erro ao salvar tempo contínuo da execução:", e)
+        );
+    }, 5000);
+
+    return () => clearInterval(id);
+  }, [elapsedSeconds, execucaoId]);
 
   if (!open || !rotina) return null;
 
@@ -678,7 +689,7 @@ export function RotinaExecucaoContainer({
             ) : (
               <>
                 <div style={bodyGridStyle}>
-                  {/* COLUNA 1: CHECKLIST (modelo ERP corporativo) */}
+                  {/* COLUNA 1: CHECKLIST */}
                   <div style={colunaStyle}>
                     <div style={colunaTitleStyle}>Checklist da execução</div>
                     <div
