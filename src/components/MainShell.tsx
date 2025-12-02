@@ -1,6 +1,6 @@
 // ============================================================================
-// MainShell.tsx — EQF V13
-// Versão revisada + Relatórios N2 integrado
+// MainShell.tsx — EQF V13 FINAL
+// Base do BKP + Adição da tela "Relatórios N2"
 // ============================================================================
 
 import type React from "react";
@@ -9,28 +9,30 @@ import type { Session } from "@supabase/supabase-js";
 import type { Usuario } from "../types";
 import { theme } from "../styles";
 
-// NÍVEL 1
+// TELAS NÍVEL 1
 import { KpiResumoN1 } from "./KpiResumoN1";
 import { KpiPlanejadoExecutadoN1 } from "./KpiPlanejadoExecutadoN1";
 import { N1CreateRotina } from "./N1CreateRotina";
 import { N1ListarRotinas } from "./N1ListarRotinas";
 import { N1ExecucaoPorRegional } from "./N1ExecucaoPorRegional";
 
-// NÍVEL 2
+// TELAS NÍVEL 2
 import { KpiResumoN2 } from "./KpiResumoN2";
 import { KpiPlanejadoExecutadoN2 } from "./KpiPlanejadoExecutadoN2";
-import { N2CriarRotina } from "./N2CriarRotina";
-import { N2ListarRotinas } from "./N2ListarRotinas";
 import { N2ExecutarRotina } from "./N2ExecutarRotina";
+import { N2ListarRotinas } from "./N2ListarRotinas";
+import { N2CriarRotina } from "./N2CriarRotina";
 
-// NOVO – RELATÓRIOS N2
+// NOVO — RELATÓRIOS N2
 import { N2Relatorios } from "./N2Relatorios";
 
-// NÍVEL 3
+// TELAS NÍVEL 3
+import { KpiResumoN3 } from "./KpiResumoN3";
+import { KpiPlanejadoExecutadoN3 } from "./KpiPlanejadoExecutadoN3";
+import { N3MinhasRotinas } from "./N3MinhasRotinas";
 import { N3CriarRotinaAvulsa } from "./N3CriarRotinaAvulsa";
-import { RotinaExecucaoContainer } from "./RotinaExecucaoContainer";
 
-// COMPONENTES COMPARTILHADOS
+// GERAL
 import { AgendaHoje } from "./AgendaHoje";
 
 type Props = {
@@ -39,12 +41,7 @@ type Props = {
   onLogout: () => void;
 };
 
-type MenuKey =
-  | "overview"
-  | "rotinas"
-  | "agenda"
-  | "kpi"
-  | "relatorios"; // <--- ADICIONADO
+type MenuKey = "overview" | "rotinas" | "agenda" | "kpi" | "relatorios";
 
 // ============================================================================
 // ESTILOS
@@ -68,29 +65,7 @@ const shellStyles: Record<string, React.CSSProperties> = {
     flexDirection: "column",
     gap: 24,
   },
-  logoRow: {
-    display: "flex",
-    alignItems: "center",
-    gap: 10,
-  },
-  logoBadge: {
-    width: 32,
-    height: 32,
-    borderRadius: 999,
-    background:
-      "conic-gradient(from 150deg, #22c55e, #f97316, #22c55e, #22c55e)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontWeight: 800,
-    color: "#020617",
-    border: "2px solid #020617",
-  },
-  main: {
-    flex: 1,
-    display: "flex",
-    flexDirection: "column",
-  },
+  main: { flex: 1, display: "flex", flexDirection: "column" },
   topBar: {
     height: 64,
     borderBottom: `1px solid ${theme.colors.borderSoft}`,
@@ -99,11 +74,7 @@ const shellStyles: Record<string, React.CSSProperties> = {
     justifyContent: "space-between",
     alignItems: "center",
   },
-  content: {
-    flex: 1,
-    padding: "20px 24px",
-    overflow: "auto",
-  },
+  content: { flex: 1, padding: "20px 24px", overflow: "auto" },
   sectionTitle: { fontSize: 18, fontWeight: 600, marginBottom: 8 },
   sectionSubtitle: {
     fontSize: 13,
@@ -127,46 +98,54 @@ const shellStyles: Record<string, React.CSSProperties> = {
 // MAIN
 // ============================================================================
 export function MainShell({ perfil, onLogout }: Props) {
-  const [menu, setMenu] = useState<MenuKey>("overview");
+  const [menu, setMenu] = useState<MenuKey>(
+    perfil.nivel === "N3" ? "agenda" : "overview"
+  );
 
   // --------------------------------------------------------------------------
-  // OVERVIEW
+  // VISÃO GERAL
   // --------------------------------------------------------------------------
-  const renderOverview = () => {
-    if (perfil.nivel === "N2") {
-      return (
-        <div>
-          <h2 style={shellStyles.sectionTitle}>Visão geral</h2>
-          <p style={shellStyles.sectionSubtitle}>
-            Painel principal da regional – visão N2.
-          </p>
+  const renderOverview = () => (
+    <div>
+      <h2 style={shellStyles.sectionTitle}>Visão geral</h2>
+      <p style={shellStyles.sectionSubtitle}>
+        Painel principal do setor — visão por nível de acesso.
+      </p>
 
-          <div style={shellStyles.grid}>
-            <div style={shellStyles.card}>
-              <KpiResumoN2 perfil={perfil} />
-              <div style={{ height: 12 }} />
-              <KpiPlanejadoExecutadoN2 perfil={perfil} />
-            </div>
-
-            <div style={shellStyles.card}>
-              <h3 style={{ marginBottom: 6 }}>Agenda da regional</h3>
-              <AgendaHoje perfil={perfil} filtroInicial="equipe" />
-            </div>
+      {perfil.nivel === "N1" && (
+        <div style={shellStyles.grid}>
+          <div style={shellStyles.card}>
+            <KpiResumoN1 perfil={perfil} />
+            <div style={{ height: 12 }} />
+            <KpiPlanejadoExecutadoN1 perfil={perfil} />
+          </div>
+          <div style={shellStyles.card}>
+            <AgendaHoje perfil={perfil} />
           </div>
         </div>
-      );
-    }
+      )}
 
-    // N1 e N3 ficam iguais ao seu original
-    return (
-      <div>
-        <h2 style={shellStyles.sectionTitle}>Visão geral</h2>
-        <p style={shellStyles.sectionSubtitle}>
-          Painel principal do setor — visão por nível.
-        </p>
-      </div>
-    );
-  };
+      {perfil.nivel === "N2" && (
+        <div style={shellStyles.grid}>
+          <div style={shellStyles.card}>
+            <KpiResumoN2 perfil={perfil} />
+            <div style={{ height: 12 }} />
+            <KpiPlanejadoExecutadoN2 perfil={perfil} />
+          </div>
+
+          <div style={shellStyles.card}>
+            <AgendaHoje perfil={perfil} filtroInicial="equipe" />
+          </div>
+        </div>
+      )}
+
+      {perfil.nivel === "N3" && (
+        <div style={shellStyles.card}>
+          <AgendaHoje perfil={perfil} filtroInicial="minhas" />
+        </div>
+      )}
+    </div>
+  );
 
   // --------------------------------------------------------------------------
   // ROTINAS
@@ -174,20 +153,25 @@ export function MainShell({ perfil, onLogout }: Props) {
   const renderRotinas = () => (
     <div>
       <h2 style={shellStyles.sectionTitle}>Rotinas & Execução</h2>
-      <p style={shellStyles.sectionSubtitle}>
-        Criação e gerenciamento de rotinas.
-      </p>
+
+      {perfil.nivel === "N1" && (
+        <div style={shellStyles.grid}>
+          <div style={shellStyles.card}>
+            <N1CreateRotina perfil={perfil} />
+          </div>
+          <div style={shellStyles.card}>
+            <N1ListarRotinas perfil={perfil} />
+          </div>
+        </div>
+      )}
 
       {perfil.nivel === "N2" && (
         <>
           <div style={shellStyles.grid}>
             <div style={shellStyles.card}>
-              <h3>Criar rotina (N2)</h3>
               <N2CriarRotina perfil={perfil} />
             </div>
-
             <div style={shellStyles.card}>
-              <h3>Rotinas da minha regional</h3>
               <N2ListarRotinas perfil={perfil} />
             </div>
           </div>
@@ -195,10 +179,20 @@ export function MainShell({ perfil, onLogout }: Props) {
           <div style={{ height: 16 }} />
 
           <div style={shellStyles.card}>
-            <h3>Execução do time (N3)</h3>
             <N2ExecutarRotina perfil={perfil} />
           </div>
         </>
+      )}
+
+      {perfil.nivel === "N3" && (
+        <div style={shellStyles.grid}>
+          <div style={shellStyles.card}>
+            <N3CriarRotinaAvulsa perfil={perfil} />
+          </div>
+          <div style={shellStyles.card}>
+            <N3MinhasRotinas perfil={perfil} />
+          </div>
+        </div>
       )}
     </div>
   );
@@ -208,30 +202,44 @@ export function MainShell({ perfil, onLogout }: Props) {
   // --------------------------------------------------------------------------
   const renderAgenda = () => (
     <div>
-      <h2 style={shellStyles.sectionTitle}>Agenda & Rotinas do dia</h2>
+      <h2 style={shellStyles.sectionTitle}>Agenda do dia</h2>
 
-      {perfil.nivel === "N2" && (
-        <div style={shellStyles.grid}>
-          <div style={shellStyles.card}>
-            <h3>Agenda da regional</h3>
-            <AgendaHoje perfil={perfil} filtroInicial="equipe" />
-          </div>
+      <div style={shellStyles.card}>
+        {perfil.nivel === "N3" && (
+          <AgendaHoje perfil={perfil} filtroInicial="minhas" />
+        )}
 
-          <div style={shellStyles.card}>
-            <h3>Agenda individual (N2)</h3>
-            <AgendaHoje perfil={perfil} filtroInicial="pessoal" />
-          </div>
-        </div>
-      )}
+        {perfil.nivel === "N2" && (
+          <AgendaHoje perfil={perfil} filtroInicial="equipe" />
+        )}
+
+        {perfil.nivel === "N1" && <AgendaHoje perfil={perfil} />}
+      </div>
     </div>
   );
 
   // --------------------------------------------------------------------------
-  // KPI
+  // KPI & RELATÓRIOS
   // --------------------------------------------------------------------------
   const renderKpi = () => (
     <div>
-      <h2 style={shellStyles.sectionTitle}>KPI & Indicadores</h2>
+      <h2 style={shellStyles.sectionTitle}>KPI & Relatórios</h2>
+
+      {perfil.nivel === "N1" && (
+        <>
+          <div style={shellStyles.card}>
+            <KpiResumoN1 perfil={perfil} />
+          </div>
+          <div style={{ height: 12 }} />
+          <div style={shellStyles.card}>
+            <KpiPlanejadoExecutadoN1 perfil={perfil} />
+          </div>
+          <div style={{ height: 12 }} />
+          <div style={shellStyles.card}>
+            <N1ExecucaoPorRegional perfil={perfil} />
+          </div>
+        </>
+      )}
 
       {perfil.nivel === "N2" && (
         <>
@@ -244,24 +252,37 @@ export function MainShell({ perfil, onLogout }: Props) {
           </div>
         </>
       )}
+
+      {perfil.nivel === "N3" && (
+        <>
+          <div style={shellStyles.card}>
+            <KpiResumoN3 perfil={perfil} />
+          </div>
+          <div style={{ height: 12 }} />
+          <div style={shellStyles.card}>
+            <KpiPlanejadoExecutadoN3 perfil={perfil} />
+          </div>
+        </>
+      )}
     </div>
   );
 
   // --------------------------------------------------------------------------
-  // RELATÓRIOS N2 (NOVO)
+  // RELATÓRIOS N2
   // --------------------------------------------------------------------------
-  const renderRelatorios = () => (
-    <div>
-      <h2 style={shellStyles.sectionTitle}>Relatórios N2</h2>
-      <p style={shellStyles.sectionSubtitle}>
-        Exporte rotinas, anexos e checklist em Excel / PDF.
-      </p>
+  const renderRelatorios = () =>
+    perfil.nivel === "N2" && (
+      <div>
+        <h2 style={shellStyles.sectionTitle}>Relatórios N2</h2>
+        <p style={shellStyles.sectionSubtitle}>
+          Exportação de rotinas, checklist e anexos.
+        </p>
 
-      <div style={shellStyles.card}>
-        <N2Relatorios perfil={perfil} />
+        <div style={shellStyles.card}>
+          <N2Relatorios perfil={perfil} />
+        </div>
       </div>
-    </div>
-  );
+    );
 
   // --------------------------------------------------------------------------
   // CONTENT SWITCH
@@ -282,26 +303,22 @@ export function MainShell({ perfil, onLogout }: Props) {
   };
 
   // ====================================================================
-  // RENDER
+  // RENDER PRINCIPAL
   // ====================================================================
   return (
     <div style={shellStyles.root}>
       {/* SIDEBAR */}
       <aside style={shellStyles.sidebar}>
-        <div style={shellStyles.logoRow}>
-          <div style={shellStyles.logoBadge}>EQF</div>
-          <div>
-            <div style={{ fontWeight: 700 }}>E.Q.F Rotina 2.0</div>
-            <div style={{ fontSize: 12, color: theme.colors.textSoft }}>
-              Painel Empresarial
-            </div>
+        <div>
+          <div style={{ fontWeight: 700 }}>EQF V13</div>
+          <div style={{ fontSize: 12, color: theme.colors.textMuted }}>
+            Rotina Empresarial
           </div>
         </div>
 
-        {/* BLOCO DO USUÁRIO */}
-        <div style={{ marginTop: 16, fontSize: 13 }}>
+        <div style={{ fontSize: 13 }}>
           <b>{perfil.nome}</b>
-          <div style={{ fontSize: 12, color: theme.colors.textSoft }}>
+          <div style={{ fontSize: 12, color: theme.colors.textMuted }}>
             {perfil.email}
           </div>
           <div
@@ -319,13 +336,10 @@ export function MainShell({ perfil, onLogout }: Props) {
           </div>
         </div>
 
-        {/* MENU */}
         <div style={{ marginTop: 20 }}>
           <button
             type="button"
-            style={{
-              ...menuButton(menu === "overview"),
-            }}
+            style={menuButton(menu === "overview")}
             onClick={() => setMenu("overview")}
           >
             Dashboard
@@ -355,7 +369,6 @@ export function MainShell({ perfil, onLogout }: Props) {
             KPI
           </button>
 
-          {/* BOTÃO APARECE APENAS PARA N2 */}
           {perfil.nivel === "N2" && (
             <button
               type="button"
@@ -367,7 +380,6 @@ export function MainShell({ perfil, onLogout }: Props) {
           )}
         </div>
 
-        {/* LOGOUT */}
         <button
           type="button"
           style={{
@@ -377,7 +389,6 @@ export function MainShell({ perfil, onLogout }: Props) {
             border: `1px solid ${theme.colors.borderSoft}`,
             background: "transparent",
             color: theme.colors.textSoft,
-            cursor: "pointer",
           }}
           onClick={onLogout}
         >
@@ -404,9 +415,7 @@ export function MainShell({ perfil, onLogout }: Props) {
   );
 }
 
-// =====================================================================================
-// ESTILO DO MENU BUTTON
-// =====================================================================================
+// BOTÃO DO MENU
 function menuButton(active: boolean): React.CSSProperties {
   return {
     width: "100%",
@@ -423,3 +432,4 @@ function menuButton(active: boolean): React.CSSProperties {
 }
 
 export default MainShell;
+
