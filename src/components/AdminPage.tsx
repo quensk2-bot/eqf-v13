@@ -308,6 +308,7 @@ export default function AdminPage() {
     departamento_id: string | number | "";
     setor_id: string | number | "";
     regional_id: string | number | "";
+    senha: string;
   }>({
     nome: "",
     email: "",
@@ -315,6 +316,7 @@ export default function AdminPage() {
     departamento_id: "",
     setor_id: "",
     regional_id: "",
+    senha: "",
   });
   const [criandoUsuario, setCriandoUsuario] = useState(false);
   const [erroNovoUsuario, setErroNovoUsuario] = useState<string | null>(null);
@@ -455,8 +457,17 @@ export default function AdminPage() {
     e.preventDefault();
     setErroNovoUsuario(null);
 
-    if (!novoUsuario.nome.trim() || !novoUsuario.email.trim()) {
-      setErroNovoUsuario("Nome e e-mail são obrigatórios.");
+    if (
+      !novoUsuario.nome.trim() ||
+      !novoUsuario.email.trim() ||
+      !novoUsuario.senha.trim()
+    ) {
+      setErroNovoUsuario("Nome, e-mail e senha são obrigatórios.");
+      return;
+    }
+
+    if (novoUsuario.senha.trim().length < 6) {
+      setErroNovoUsuario("A senha deve ter pelo menos 6 caracteres.");
       return;
     }
 
@@ -476,6 +487,7 @@ export default function AdminPage() {
           novoUsuario.regional_id === ""
             ? null
             : Number(novoUsuario.regional_id),
+        senha: novoUsuario.senha.trim(),
       };
 
       const { data, error } = await supabase.functions.invoke(
@@ -509,6 +521,7 @@ export default function AdminPage() {
           departamento_id: "",
           setor_id: "",
           regional_id: "",
+          senha: "",
         });
         await carregarUsuarios();
       }
@@ -930,6 +943,22 @@ export default function AdminPage() {
                       }
                       style={adminStyles.input}
                       placeholder="email@empresa.com"
+                    />
+                  </div>
+
+                  <div style={adminStyles.formGroup}>
+                    <label style={adminStyles.label}>Senha inicial</label>
+                    <input
+                      type="password"
+                      value={novoUsuario.senha}
+                      onChange={(e) =>
+                        setNovoUsuario((prev) => ({
+                          ...prev,
+                          senha: e.target.value,
+                        }))
+                      }
+                      style={adminStyles.input}
+                      placeholder="Defina a senha de acesso"
                     />
                   </div>
 
