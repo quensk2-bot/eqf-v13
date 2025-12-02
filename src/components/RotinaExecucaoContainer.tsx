@@ -327,9 +327,8 @@ export function RotinaExecucaoContainer({
   // Inicialização — carrega/ cria execução apenas UMA vez por rotina+executor
   // ---------------------------------------------------------------------------
   useEffect(() => {
-    // já tem execução carregada → não reinicia
     if (!open || !rotina) return;
-    if (execucaoId !== null) return;
+    if (execucaoId !== null) return; // já carregado
 
     const init = async () => {
       setIsMinimized(false);
@@ -490,18 +489,43 @@ export function RotinaExecucaoContainer({
   useEffect(() => {
     if (!execucaoId) return;
 
-    const id = setInterval(() => {
-      supabase
+    const interval = setInterval(async () => {
+      const { error } = await supabase
         .from("rotina_execucoes")
         .update({ duracao_total_segundos: elapsedSeconds })
-        .eq("id", execucaoId)
-        .catch((e) =>
-          console.error("Erro ao salvar tempo contínuo da execução:", e)
-        );
+        .eq("id", execucaoId);
+
+      if (error) {
+        console.error("Erro ao salvar tempo contínuo da execução:", error);
+      }
     }, 5000);
 
-    return () => clearInterval(id);
+    return () => clearInterval(interval);
   }, [elapsedSeconds, execucaoId]);
+
+  // ---------------------------------------------------------------------------
+  // Salvar estado parcial ao desmontar o componente
+  // ---------------------------------------------------------------------------
+  useEffect(() => {
+    return () => {
+      if (execucaoId && !isFinalizada) {
+        (async () => {
+          const { error } = await supabase
+            .from("rotina_execucoes")
+            .update({
+              duracao_total_segundos: elapsedSeconds,
+              observacoes,
+              checklist_execucao: checklist,
+            })
+            .eq("id", execucaoId);
+
+          if (error) {
+            console.error("Erro ao salvar estado ao desmontar:", error);
+          }
+        })();
+      }
+    };
+  }, [execucaoId, isFinalizada, elapsedSeconds, observacoes, checklist]);
 
   if (!open || !rotina) return null;
 
@@ -524,7 +548,7 @@ export function RotinaExecucaoContainer({
   const persistEstadoParcial = async (extra: Record<string, any> = {}) => {
     if (!execucaoId) return;
     try {
-      await supabase
+      const { error } = await supabase
         .from("rotina_execucoes")
         .update({
           duracao_total_segundos: elapsedSeconds,
@@ -533,6 +557,10 @@ export function RotinaExecucaoContainer({
           ...extra,
         })
         .eq("id", execucaoId);
+
+      if (error) {
+        console.error("Erro ao salvar estado parcial da execução:", error);
+      }
     } catch (e) {
       console.error("Erro ao salvar estado parcial da execução:", e);
     }
@@ -551,7 +579,7 @@ export function RotinaExecucaoContainer({
   const handleFinalizar = async () => {
     if (!execucaoId) return;
     try {
-      await supabase
+      const { error } = await supabase
         .from("rotina_execucoes")
         .update({
           finalizado_em: new Date().toISOString(),
@@ -561,6 +589,12 @@ export function RotinaExecucaoContainer({
           pausado_em: null,
         })
         .eq("id", execucaoId);
+
+      if (error) {
+        console.error("Erro ao finalizar rotina:", error);
+        alert("Erro ao finalizar rotina. Tente novamente.");
+        return;
+      }
 
       setIsFinalizada(true);
       setIsPaused(true);
@@ -699,9 +733,9 @@ export function RotinaExecucaoContainer({
                         marginBottom: 6,
                       }}
                     >
-                      Marque o item concluído e registre o valor da
-                      conferência (quantidade, valor, etc.). Este checklist foi
-                      criado na rotina.
+                      Marque o item concluído e registre o valor da conferência
+                      (quantidade, valor, etc.). Este checklist foi criado na
+                      rotina.
                     </div>
                     <div style={checklistListStyle}>
                       {checklist.map((item) => (
@@ -854,8 +888,8 @@ export function RotinaExecucaoContainer({
                   <div style={footerInfoStyle}>
                     O cronômetro registra o tempo total da execução. Você pode
                     pausar ou minimizar sem perder o tempo. Ao finalizar, os
-                    dados de checklist, tempo, observações e anexos ficam
-                    salvos para auditoria.
+                    dados de checklist, tempo, observações e anexos ficam salvos
+                    para auditoria.
                   </div>
                   <div style={{ display: "flex", gap: 8 }}>
                     {!isFinalizada && (
